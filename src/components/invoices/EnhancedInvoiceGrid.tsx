@@ -287,20 +287,20 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={() => {
-                  const updatedItem = {
+                  const updatedItem: LineItem = {
                     ...row.original,
                     adjusted_amount: parseFloat(editValue) || 0,
-                    status: 'adjusted'
+                    status: "adjusted" // Using literal type here to match the LineItem type
                   };
                   onLineItemUpdate(updatedItem);
                   setEditingCell(null);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const updatedItem = {
+                    const updatedItem: LineItem = {
                       ...row.original,
                       adjusted_amount: parseFloat(editValue) || 0,
-                      status: 'adjusted'
+                      status: "adjusted" // Using literal type here to match the LineItem type
                     };
                     onLineItemUpdate(updatedItem);
                     setEditingCell(null);
