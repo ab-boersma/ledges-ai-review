@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import {
   flexRender,
@@ -32,6 +31,7 @@ import {
   ChevronDown,
   ChevronUp,
   Edit,
+  DollarSign,
 } from 'lucide-react';
 import AICommentary from './AICommentary';
 import AdjustmentPanel from './AdjustmentPanel';
@@ -270,23 +270,73 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     {
       accessorKey: 'amount',
       header: 'Amount',
-      cell: ({ row }) => {
+      cell: ({ row, column }) => {
         const amount = row.getValue('amount') as number;
         const adjustedAmount = row.original.adjusted_amount;
         
+        const isEditing = 
+          editingCell?.rowId === row.id && 
+          editingCell?.columnId === column.id;
+        
+        if (isEditing) {
+          return (
+            <div className="relative">
+              <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Input
+                className="h-8 w-28 p-1 pl-8 text-right"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  const updatedItem = {
+                    ...row.original,
+                    adjusted_amount: parseFloat(editValue) || 0,
+                    status: 'adjusted'
+                  };
+                  onLineItemUpdate(updatedItem);
+                  setEditingCell(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const updatedItem = {
+                      ...row.original,
+                      adjusted_amount: parseFloat(editValue) || 0,
+                      status: 'adjusted'
+                    };
+                    onLineItemUpdate(updatedItem);
+                    setEditingCell(null);
+                  } else if (e.key === 'Escape') {
+                    setEditingCell(null);
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          );
+        }
+        
         return (
-          <div className="text-right font-medium">
+          <div className="text-right font-medium cursor-pointer hover:bg-gray-100 flex items-center justify-end"
+               onClick={() => {
+                 setEditingCell({ rowId: row.id, columnId: column.id });
+                 setEditValue((adjustedAmount !== null ? adjustedAmount : amount).toString());
+               }}>
             {adjustedAmount !== null ? (
               <div className="flex flex-col">
                 <span className="line-through text-gray-400 text-xs">
                   {formatCurrency(amount)}
                 </span>
-                <span className="text-blue-600">
-                  {formatCurrency(adjustedAmount)}
-                </span>
+                <div className="flex items-center justify-end">
+                  <span className="text-blue-600">
+                    {formatCurrency(adjustedAmount)}
+                  </span>
+                  <Edit className="h-3 w-3 ml-1 text-gray-400" />
+                </div>
               </div>
             ) : (
-              formatCurrency(amount)
+              <div className="flex items-center justify-end">
+                <span>{formatCurrency(amount)}</span>
+                <Edit className="h-3 w-3 ml-1 text-gray-400" />
+              </div>
             )}
           </div>
         );
@@ -339,7 +389,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         );
       }
     },
-  ], [editingCell, editValue, expandedRows, onBulkEdit]);
+  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate]);
 
   // Apply global filtering based on search input
   const globalFilter = useMemo(() => {
