@@ -22,7 +22,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Import our refactored components
-import { getColumns } from './grid/columns';
+import { getColumns } from './grid/column-defs';
 import { ActiveFilters } from './grid/ActiveFilters';
 import { BulkActionPanel } from './grid/BulkActionPanel';
 import { Pagination } from './grid/Pagination';
@@ -134,7 +134,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
     status: filterFunctions.status,
   }), []);
   
-  // Get columns with filter props - FIXED: Added columnFilterFns as the 4th argument
+  // Get columns with filter props - using refactored column definitions
   const columns = useMemo(() => getColumns({
     onBulkEdit,
     onFilterChange: handleFilterChange,
