@@ -138,7 +138,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
     onBulkEdit,
     onFilterChange: handleFilterChange,
     activeFilters: columnFilters,
-    columnFilterFns  // Added the missing fourth argument
+    columnFilterFns  // Now we're passing all 4 required arguments
   }), [onBulkEdit, columnFilters, columnFilterFns]);
   
   // Initialize table
