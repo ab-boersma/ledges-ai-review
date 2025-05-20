@@ -33,7 +33,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const handleFilterChange = (key: string, value: any) => {
-    const updatedFilters = { ...filters, [key]: value };
+    // Convert 'all' values to empty string for filtering logic
+    const normalizedValue = value === 'all' ? '' : value;
+    
+    const updatedFilters = { ...filters, [key]: normalizedValue };
     setFilters(updatedFilters);
     
     // Update active filters list for badge display
@@ -81,14 +84,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
         </div>
         
         <Select 
-          value={filters.status} 
+          value={filters.status || 'all'} 
           onValueChange={(value) => handleFilterChange('status', value)}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="adjusted">Adjusted</SelectItem>
@@ -132,14 +135,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Task Code</label>
               <Select 
-                value={filters.taskCode} 
+                value={filters.taskCode || 'all'} 
                 onValueChange={(value) => handleFilterChange('taskCode', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select task code" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Tasks</SelectItem>
+                  <SelectItem value="all">All Tasks</SelectItem>
                   <SelectItem value="A101">A101 - Plan and prepare</SelectItem>
                   <SelectItem value="A102">A102 - Research</SelectItem>
                   <SelectItem value="A103">A103 - Draft/Revise</SelectItem>
@@ -152,14 +155,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
             <div className="space-y-2">
               <label className="text-sm font-medium">AI Actions</label>
               <Select 
-                value={filters.aiAction} 
+                value={filters.aiAction || 'all'} 
                 onValueChange={(value) => handleFilterChange('aiAction', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by AI action" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Items</SelectItem>
+                  <SelectItem value="all">All Items</SelectItem>
                   <SelectItem value="approve">Approved by AI</SelectItem>
                   <SelectItem value="adjust">Flagged for Adjustment</SelectItem>
                   <SelectItem value="reject">Recommended Rejection</SelectItem>
