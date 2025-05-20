@@ -121,6 +121,15 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     onLineItemUpdate(updatedItem);
   };
 
+  // Add a quick accept handler
+  const handleQuickAccept = (lineItem: LineItem) => {
+    const updatedItem: LineItem = {
+      ...lineItem,
+      status: 'compliance_accepted'
+    };
+    onLineItemUpdate(updatedItem);
+  };
+
   // Define columns
   const columns = useMemo<ColumnDef<LineItem>[]>(() => [
     {
@@ -178,26 +187,48 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       cell: ({ row }) => {
         const lineItem = row.original;
         const isRejected = lineItem.status === 'rejected';
+        const isAccepted = lineItem.status === 'compliance_accepted';
         
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`h-8 w-8 ${isRejected ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                  onClick={() => handleQuickReject(lineItem)}
-                  disabled={isRejected}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isRejected ? 'Already rejected' : 'Reject this line item'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center space-x-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${isAccepted ? 'text-green-500' : 'text-gray-500 hover:text-green-500'}`}
+                    onClick={() => handleQuickAccept(lineItem)}
+                    disabled={isAccepted}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isAccepted ? 'Already accepted' : 'Accept this line item'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${isRejected ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                    onClick={() => handleQuickReject(lineItem)}
+                    disabled={isRejected}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isRejected ? 'Already rejected' : 'Reject this line item'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         );
       },
       enableSorting: false,
@@ -412,6 +443,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         const adjustedAmount = row.original.adjusted_amount;
         const status = row.original.status;
         const isRejected = status === 'rejected';
+        const hasAmountChange = adjustedAmount !== null && adjustedAmount !== amount;
         
         const isEditing = 
           editingCell?.rowId === row.id && 
@@ -455,7 +487,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         
         return (
           <div 
-            className={`text-right font-medium cursor-pointer hover:bg-gray-100 flex items-center justify-end ${isRejected ? 'opacity-50' : ''}`}
+            className={`text-right font-medium cursor-pointer hover:bg-gray-100 flex items-center justify-end ${isRejected ? 'opacity-50' : ''} ${hasAmountChange ? 'bg-purple-50 rounded px-1' : ''}`}
             onClick={() => {
               if (!isRejected) {
                 setEditingCell({ rowId: row.id, columnId: column.id });
@@ -527,7 +559,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             break;
           case 'compliance_accepted':
             statusClass = 'bg-green-100 text-green-800 border-green-200';
-            displayText = 'Compliance Accepted';
+            displayText = 'Accepted';
             break;
           case 'adjusted':
             statusClass = 'bg-amber-100 text-amber-800 border-amber-200';
@@ -555,7 +587,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         );
       }
     },
-  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate, filters.search]);
+  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate, filters.search, handleQuickAccept, handleQuickReject]);
 
   // Apply global filtering based on search input
   const globalFilter = useMemo(() => {
@@ -571,14 +603,12 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     };
   }, [filters.search]);
 
-  // Apply additional filters
+  // Apply enhanced filtering with new filter options
   const customFilters = useMemo(() => {
     return (row: LineItem) => {
       // Status filter
-      if (filters.status) {
-        if (filters.status === 'reviewed' && row.status === 'reviewed') return true;
-        if (filters.status === 'compliance_accepted' && row.status === 'compliance_accepted') return true;
-        if (filters.status !== row.status) return false;
+      if (filters.status && row.status !== filters.status) {
+        return false;
       }
       
       // Task code filter
@@ -597,6 +627,29 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       // AI action filter
       if (filters.aiAction && row.ai_action !== filters.aiAction) {
         return false;
+      }
+      
+      // New filtering options
+      
+      // Special case: if multiple status filters are active, match any of them (OR logic)
+      const statusFiltersActive = filters.showAdjusted || filters.showRejected || filters.showAccepted;
+      
+      if (statusFiltersActive) {
+        const isStatusMatch = 
+          (filters.showAdjusted && row.status === 'adjusted') ||
+          (filters.showRejected && row.status === 'rejected') ||
+          (filters.showAccepted && row.status === 'compliance_accepted');
+          
+        if (!isStatusMatch) return false;
+      }
+      
+      // Filter for items with amount changes
+      if (filters.hasAmountChanges) {
+        const hasChanges = 
+          row.adjusted_amount !== null && 
+          row.adjusted_amount !== row.amount;
+        
+        if (!hasChanges) return false;
       }
       
       return true;
@@ -649,10 +702,10 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800"
-              onClick={() => onBulkEdit(selectedRows, 'status', 'reviewed')}
+              className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800"
+              onClick={() => onBulkEdit(selectedRows, 'status', 'compliance_accepted')}
             >
-              Mark Reviewed
+              Accept
             </Button>
             <Button
               variant="outline"
