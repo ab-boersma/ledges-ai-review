@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { LineItem } from '@/types';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, FilterFn } from '@tanstack/react-table';
 import { Check, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,12 +16,14 @@ interface GetColumnsProps {
   onBulkEdit: (lineItems: LineItem[], fieldName: string, value: any) => void;
   onFilterChange: (columnId: string, value: any) => void;
   activeFilters: Record<string, any>;
+  columnFilterFns: Record<string, FilterFn<any>>;  // Added this parameter
 }
 
 export const getColumns = ({
   onBulkEdit,
   onFilterChange,
-  activeFilters
+  activeFilters,
+  columnFilterFns
 }: GetColumnsProps): ColumnDef<LineItem>[] => {
   return [
     {

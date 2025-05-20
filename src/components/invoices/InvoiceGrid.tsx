@@ -137,8 +137,9 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
   const columns = useMemo(() => getColumns({
     onBulkEdit,
     onFilterChange: handleFilterChange,
-    activeFilters: columnFilters
-  }), [onBulkEdit, columnFilters]);
+    activeFilters: columnFilters,
+    columnFilterFns  // Added the missing fourth argument
+  }), [onBulkEdit, columnFilters, columnFilterFns]);
   
   // Initialize table
   const table = useReactTable({
