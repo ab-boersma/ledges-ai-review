@@ -28,7 +28,8 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({
   onSave,
   expanded 
 }) => {
-  const [adjustmentMethod, setAdjustmentMethod] = useState<'hoursRate' | 'amount'>('hoursRate');
+  // Changed the default to 'amount' instead of 'hoursRate'
+  const [adjustmentMethod, setAdjustmentMethod] = useState<'hoursRate' | 'amount'>('amount');
   const [adjustedHours, setAdjustedHours] = useState<string>(
     lineItem.adjusted_hours?.toString() || lineItem.hours.toString()
   );
@@ -205,11 +206,25 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({
           )}
           
           <div className="bg-green-50 border border-green-200 rounded p-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Savings:</span>
-              <span className="text-green-700 font-medium">
-                {formatCurrency(savings)} ({savingsPercentage.toFixed(1)}%)
-              </span>
+            <div className="flex flex-col space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Total Adjustment:</span>
+                <span className="text-green-700 font-medium">
+                  {formatCurrency(savings)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Percentage:</span>
+                <span className="text-green-700 font-medium">
+                  {savingsPercentage > 0 ? "↓" : "↑"} {Math.abs(savingsPercentage).toFixed(1)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full bg-gray-200 rounded-full mt-1">
+                <div 
+                  className={`h-full rounded-full ${savings > 0 ? 'bg-green-500' : 'bg-red-500'}`} 
+                  style={{ width: `${Math.min(Math.abs(savingsPercentage), 100)}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>

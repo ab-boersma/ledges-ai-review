@@ -106,6 +106,7 @@ const InvoiceDetail: React.FC = () => {
     setLoading(true);
     
     setTimeout(() => {
+      // Update the generateMockLineItems call to use the new status values
       const mockItems = generateMockLineItems(347);
       setLineItems(mockItems);
       setLoading(false);
@@ -151,9 +152,9 @@ const InvoiceDetail: React.FC = () => {
   const recalculateInvoiceTotals = (items: LineItem[]) => {
     const originalTotal = items.reduce((sum, item) => sum + item.amount, 0);
     
-    // Calculate adjusted total based on status
+    // Calculate adjusted total based on status - updated for new statuses
     const adjustedTotal = items.reduce((sum, item) => {
-      if (item.status === 'approved') {
+      if (item.status === 'reviewed' || item.status === 'compliance_accepted') {
         return sum + item.amount;
       } else if (item.status === 'adjusted' && item.adjusted_amount !== null) {
         return sum + item.adjusted_amount;
@@ -176,7 +177,7 @@ const InvoiceDetail: React.FC = () => {
     
     // Simulate AI compliance check
     setTimeout(() => {
-      // Update some line items with compliance flags
+      // Update some line items with compliance flags and the new status values
       const updatedItems = lineItems.map((item, index) => {
         // Flag about 10% of items randomly
         if (index % 10 === 0) {
@@ -195,13 +196,19 @@ const InvoiceDetail: React.FC = () => {
           let adjustedHours = null;
           let adjustedRate = null;
           let adjustedAmount = null;
+          let newStatus: 'compliance_accepted' | 'adjusted' | 'rejected' | 'pending' = 'pending';
           
-          if (aiAction === 'adjust') {
+          if (aiAction === 'approve') {
+            newStatus = 'compliance_accepted';
+          } else if (aiAction === 'adjust') {
             // Reduce hours or rate by 10-30%
             const reductionFactor = 0.7 + Math.random() * 0.2;
             adjustedHours = parseFloat((item.hours * reductionFactor).toFixed(2));
             adjustedRate = item.rate;
             adjustedAmount = parseFloat((adjustedHours * adjustedRate).toFixed(2));
+            newStatus = 'adjusted';
+          } else if (aiAction === 'reject') {
+            newStatus = 'rejected';
           }
           
           return {
@@ -211,7 +218,7 @@ const InvoiceDetail: React.FC = () => {
             adjusted_hours: aiAction === 'adjust' ? adjustedHours : null,
             adjusted_rate: aiAction === 'adjust' ? adjustedRate : null,
             adjusted_amount: aiAction === 'adjust' ? adjustedAmount : null,
-            status: aiAction === 'approve' ? 'approved' : aiAction === 'adjust' ? 'adjusted' : aiAction === 'reject' ? 'rejected' : item.status
+            status: newStatus
           };
         }
         return item;

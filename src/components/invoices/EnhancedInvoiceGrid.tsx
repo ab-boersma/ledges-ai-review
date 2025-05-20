@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import {
   flexRender,
@@ -32,6 +33,7 @@ import {
   ChevronUp,
   Edit,
   DollarSign,
+  ShieldCheck,
 } from 'lucide-react';
 import AICommentary from './AICommentary';
 import AdjustmentPanel from './AdjustmentPanel';
@@ -67,6 +69,13 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
   // Format hours with 2 decimal places
   const formatHours = (value: number): string => {
     return value.toFixed(2);
+  };
+
+  // Calculate adjustment percentage
+  const calculateAdjustmentPercentage = (original: number, adjusted: number | null): string => {
+    if (adjusted === null) return "0%";
+    const diff = ((adjusted - original) / original) * 100;
+    return `${diff > 0 ? '+' : ''}${diff.toFixed(1)}%`;
   };
 
   // Toggle expanded row
@@ -137,11 +146,11 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         
         switch(action) {
           case 'approve':
-            return <Check className="h-4 w-4 mx-auto text-green-500" />;
+            return <ShieldCheck className="h-4 w-4 mx-auto text-green-500" title="Compliance accepted" />;
           case 'adjust':
-            return <AlertTriangle className="h-4 w-4 mx-auto text-amber-500" />;
+            return <AlertTriangle className="h-4 w-4 mx-auto text-amber-500" title="Needs adjustment" />;
           case 'reject':
-            return <AlertTriangle className="h-4 w-4 mx-auto text-red-500" />;
+            return <AlertTriangle className="h-4 w-4 mx-auto text-red-500" title="Recommended rejection" />;
           default:
             return null;
         }
@@ -179,6 +188,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
           editingCell?.columnId === column.id;
 
         const value = row.getValue('hours');
+        const adjustedHours = row.original.adjusted_hours;
         
         if (isEditing) {
           return (
@@ -207,14 +217,30 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
           <div 
             className="text-right cursor-pointer hover:bg-gray-100 flex items-center justify-end"
           >
-            <span
-              onClick={() => {
-                setEditingCell({ rowId: row.id, columnId: column.id });
-                setEditValue(formatHours(value as number));
-              }}
-            >
-              {formatHours(value as number)}
-            </span>
+            {adjustedHours !== null ? (
+              <div className="flex flex-col">
+                <span className="line-through text-gray-400 text-xs">
+                  {formatHours(value as number)}
+                </span>
+                <span
+                  onClick={() => {
+                    setEditingCell({ rowId: row.id, columnId: column.id });
+                    setEditValue(adjustedHours.toString());
+                  }}
+                >
+                  {formatHours(adjustedHours)}
+                </span>
+              </div>
+            ) : (
+              <span
+                onClick={() => {
+                  setEditingCell({ rowId: row.id, columnId: column.id });
+                  setEditValue(formatHours(value as number));
+                }}
+              >
+                {formatHours(value as number)}
+              </span>
+            )}
             <Edit className="h-3 w-3 ml-1 text-gray-400" />
           </div>
         );
@@ -229,6 +255,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
           editingCell?.columnId === column.id;
 
         const value = row.getValue('rate');
+        const adjustedRate = row.original.adjusted_rate;
         
         if (isEditing) {
           return (
@@ -258,10 +285,19 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             className="text-right cursor-pointer hover:bg-gray-100 flex items-center justify-end"
             onClick={() => {
               setEditingCell({ rowId: row.id, columnId: column.id });
-              setEditValue((value as number).toString());
+              setEditValue((adjustedRate !== null ? adjustedRate : value as number).toString());
             }}
           >
-            <span>{formatCurrency(value as number)}</span>
+            {adjustedRate !== null ? (
+              <div className="flex flex-col">
+                <span className="line-through text-gray-400 text-xs">
+                  {formatCurrency(value as number)}
+                </span>
+                <span>{formatCurrency(adjustedRate)}</span>
+              </div>
+            ) : (
+              <span>{formatCurrency(value as number)}</span>
+            )}
             <Edit className="h-3 w-3 ml-1 text-gray-400" />
           </div>
         );
@@ -325,11 +361,13 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
                 <span className="line-through text-gray-400 text-xs">
                   {formatCurrency(amount)}
                 </span>
-                <div className="flex items-center justify-end">
+                <div className="flex flex-col">
                   <span className="text-blue-600">
                     {formatCurrency(adjustedAmount)}
                   </span>
-                  <Edit className="h-3 w-3 ml-1 text-gray-400" />
+                  <span className={`text-xs ${adjustedAmount < amount ? 'text-green-600' : 'text-red-600'}`}>
+                    {calculateAdjustmentPercentage(amount, adjustedAmount)}
+                  </span>
                 </div>
               </div>
             ) : (
@@ -365,25 +403,38 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       cell: ({ row }) => {
         const status: string = row.getValue('status');
         let statusClass = '';
+        let displayText = '';
         
         switch(status) {
-          case 'approved':
+          case 'reviewed':
+            statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
+            displayText = 'Reviewed';
+            break;
+          case 'compliance_accepted':
             statusClass = 'bg-green-100 text-green-800 border-green-200';
+            displayText = 'Compliance Accepted';
             break;
           case 'adjusted':
             statusClass = 'bg-amber-100 text-amber-800 border-amber-200';
+            displayText = 'Adjusted';
             break;
           case 'rejected':
             statusClass = 'bg-red-100 text-red-800 border-red-200';
+            displayText = 'Rejected';
+            break;
+          case 'approved':
+            statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
+            displayText = 'Reviewed';
             break;
           default:
             statusClass = 'bg-gray-100 text-gray-800 border-gray-200';
+            displayText = status.charAt(0).toUpperCase() + status.slice(1);
         }
         
         return (
           <div className="flex justify-center">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {displayText}
             </span>
           </div>
         );
@@ -408,9 +459,11 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
   // Apply additional filters
   const customFilters = useMemo(() => {
     return (row: LineItem) => {
-      // Status filter
-      if (filters.status && row.status !== filters.status) {
-        return false;
+      // Status filter - update to handle new status values
+      if (filters.status) {
+        // For backward compatibility
+        if (filters.status === 'approved' && row.status === 'reviewed') return true;
+        if (filters.status !== row.status) return false;
       }
       
       // Task code filter
@@ -476,10 +529,10 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800"
-              onClick={() => onBulkEdit(selectedRows, 'status', 'approved')}
+              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800"
+              onClick={() => onBulkEdit(selectedRows, 'status', 'reviewed')}
             >
-              Approve
+              Mark Reviewed
             </Button>
             <Button
               variant="outline"
