@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,6 +6,14 @@ import MainLayout from '@/components/layout/MainLayout';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import InvoiceGrid from '@/components/invoices/InvoiceGrid';
 import { Invoice, LineItem } from '@/types';
+import { 
+  Card, 
+  CardContent 
+} from '@/components/ui/card';
+import { 
+  Steps,
+  Step
+} from '@/components/ui/steps';
 
 // Mock data for demonstration
 const generateMockLineItems = (count: number): LineItem[] => {
@@ -90,6 +97,7 @@ const InvoiceDetail: React.FC = () => {
   const [invoice, setInvoice] = useState<Invoice>(mockInvoice);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [activeStep, setActiveStep] = useState(1);
 
   useEffect(() => {
     // Simulate API call to load invoice data
@@ -146,6 +154,7 @@ const InvoiceDetail: React.FC = () => {
 
   const handleRunCompliance = () => {
     toast.info('Running compliance check on all line items...');
+    setActiveStep(2);
     
     // Simulate AI compliance check
     setTimeout(() => {
@@ -182,10 +191,12 @@ const InvoiceDetail: React.FC = () => {
   };
 
   const handleExport = () => {
+    setActiveStep(4);
     toast.success('Invoice exported successfully');
   };
 
   const handleApprove = () => {
+    setActiveStep(3);
     setInvoice(prev => ({
       ...prev,
       status: 'approved'
@@ -207,20 +218,45 @@ const InvoiceDetail: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <InvoiceHeader 
-          invoice={invoice}
-          onRunCompliance={handleRunCompliance}
-          onExport={handleExport}
-          onApprove={handleApprove}
-        />
+      <div className="max-w-7xl mx-auto space-y-6">
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Review Invoice Workflow</h2>
+            <Steps activeStep={activeStep} className="mb-6">
+              <Step title="Upload" description="File uploaded" />
+              <Step title="Compliance" description="Run AI check" />
+              <Step title="Review" description="Approve or adjust" />
+              <Step title="Export" description="Generate report" />
+            </Steps>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-4">
+              <h3 className="text-blue-800 font-medium mb-1">Invoice Review Instructions</h3>
+              <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
+                <li>Run the Compliance Check to identify potential issues</li>
+                <li>Review flagged items with amber or red indicators</li>
+                <li>Select multiple items to perform bulk actions</li>
+                <li>Click on hours to edit individual entries</li>
+                <li>Approve the invoice when review is complete</li>
+              </ol>
+            </div>
+          
+            <InvoiceHeader 
+              invoice={invoice}
+              onRunCompliance={handleRunCompliance}
+              onExport={handleExport}
+              onApprove={handleApprove}
+            />
+          </CardContent>
+        </Card>
         
-        <div className="bg-white rounded-lg border shadow-sm p-4">
-          <InvoiceGrid 
-            data={lineItems}
-            onBulkEdit={handleBulkEdit}
-          />
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <InvoiceGrid 
+              data={lineItems}
+              onBulkEdit={handleBulkEdit}
+            />
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

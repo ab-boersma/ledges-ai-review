@@ -39,20 +39,24 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-lg">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Invoice {invoice.invoice_number}
           </h1>
-          <p className="text-gray-500">
-            {new Date(invoice.invoice_date).toLocaleDateString()} • {invoice.format} Format
-          </p>
+          <div className="flex items-center gap-2 text-gray-500">
+            <span>{new Date(invoice.invoice_date).toLocaleDateString()}</span>
+            <span className="text-gray-300">•</span>
+            <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">{invoice.format} Format</span>
+            <span className="text-gray-300">•</span>
+            <span>Matter: {invoice.client_matter_id}</span>
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-2">
           <Button 
             variant="outline" 
-            className="flex items-center gap-1" 
+            className="flex items-center gap-1 bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" 
             onClick={onRunCompliance}
           >
             <Play className="h-4 w-4" />
@@ -69,7 +73,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </Button>
           
           <Button 
-            className="flex items-center gap-1" 
+            className="flex items-center gap-1 bg-green-600 hover:bg-green-700" 
             onClick={onApprove}
           >
             <Check className="h-4 w-4" />
@@ -79,7 +83,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-gray-500 mb-1">Original Amount</p>
@@ -88,7 +92,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-gray-500 mb-1">Adjusted Amount</p>
@@ -97,7 +101,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-gray-500 mb-1">Savings</p>

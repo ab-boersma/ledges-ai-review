@@ -63,7 +63,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             checked={
               table.getIsAllRowsSelected() ||
-              (table.getIsSomeRowsSelected() && "indeterminate")
+              (table.getIsSomeRowsSelected() ? true : false) // Fix type error by ensuring boolean
             }
             onChange={table.getToggleAllRowsSelectedHandler()}
           />
@@ -228,15 +228,16 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
   return (
     <div className="space-y-4">
       {selectedRows.length > 0 && (
-        <div className="bg-gray-50 border rounded-md p-2 flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center space-x-4">
+          <span className="text-sm font-medium text-blue-700">
             {selectedRows.length} line item{selectedRows.length !== 1 ? 's' : ''} selected
           </span>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Bulk actions:</span>
+            <span className="text-sm text-blue-600">Bulk actions:</span>
             <Button
               variant="outline"
               size="sm"
+              className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800"
               onClick={() => onBulkEdit(selectedRows, 'status', 'approved')}
             >
               Approve
@@ -244,6 +245,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
             <Button
               variant="outline"
               size="sm"
+              className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-800"
               onClick={() => onBulkEdit(selectedRows, 'status', 'adjusted')}
             >
               Adjust
@@ -251,6 +253,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
             <Button
               variant="outline"
               size="sm"
+              className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800"
               onClick={() => onBulkEdit(selectedRows, 'status', 'rejected')}
             >
               Reject
@@ -259,7 +262,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
         </div>
       )}
       
-      <div className="rounded-md border">
+      <div className="rounded-md border shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
