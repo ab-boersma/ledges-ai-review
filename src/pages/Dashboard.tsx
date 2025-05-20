@@ -6,9 +6,10 @@ import StatCard from '@/components/dashboard/StatCard';
 import RecentInvoices from '@/components/dashboard/RecentInvoices';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Invoice } from '@/types';
 
 // Mock data for demonstration
-const mockInvoices = [
+const mockInvoices: Invoice[] = [
   {
     id: '1',
     invoice_number: 'INV-2023-0123',
