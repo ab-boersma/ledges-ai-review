@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   flexRender,
@@ -638,9 +637,6 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
 
   const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
 
-  // Set filtered data to table
-  table.setPageSize(10);
-
   return (
     <div className="space-y-4">
       {selectedRows.length > 0 && (
@@ -724,47 +720,46 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
               table.getRowModel().rows.map((row) => {
                 const isExpanded = expandedRows[row.id] || false;
                 
-                return (
-                  <React.Fragment key={row.id}>
-                    <TableRow
-                      data-state={row.getIsSelected() && "selected"}
-                      className={isExpanded ? "border-b-0" : ""}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                    
-                    {isExpanded && (
-                      <TableRow className="bg-gray-50">
-                        <TableCell colSpan={columns.length} className="p-0">
-                          <div className="p-4">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                              <div>
-                                <h4 className="text-sm font-medium mb-2">AI Commentary</h4>
-                                <AICommentary 
-                                  lineItem={row.original} 
-                                  expanded={isExpanded} 
-                                />
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-medium mb-2">Adjustment Details</h4>
-                                <AdjustmentPanel 
-                                  lineItem={row.original}
-                                  onSave={onLineItemUpdate}
-                                  expanded={isExpanded}
-                                />
-                              </div>
+                return [
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={isExpanded ? "border-b-0" : ""}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>,
+                  
+                  isExpanded && (
+                    <TableRow key={`${row.id}-expanded`} className="bg-gray-50">
+                      <TableCell colSpan={columns.length} className="p-0">
+                        <div className="p-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">AI Commentary</h4>
+                              <AICommentary 
+                                lineItem={row.original} 
+                                expanded={isExpanded} 
+                              />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Adjustment Details</h4>
+                              <AdjustmentPanel 
+                                lineItem={row.original}
+                                onSave={onLineItemUpdate}
+                                expanded={isExpanded}
+                              />
                             </div>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                ];
+              }).flat()
             )}
           </TableBody>
         </Table>
