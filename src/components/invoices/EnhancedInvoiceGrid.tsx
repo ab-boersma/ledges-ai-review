@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -624,6 +625,11 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       }
     }
   });
+
+  // Set page size once during initialization, not on every render
+  useEffect(() => {
+    table.setPageSize(10);
+  }, [table]);
 
   // Filter the data manually since we're combining multiple filters
   const filteredData = useMemo(() => {
