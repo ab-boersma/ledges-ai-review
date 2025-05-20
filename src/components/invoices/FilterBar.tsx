@@ -189,7 +189,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
           </div>
         </div>
       )}
-    </Collapsible>
+    </div>
   );
 };
 
