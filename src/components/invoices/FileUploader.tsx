@@ -105,10 +105,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
       {!file ? (
         <div 
           {...getRootProps()} 
-          className={`file-drop-area ${isDragActive ? 'active' : ''} hover:bg-gray-50 cursor-pointer`}
+          className={`file-drop-area ${isDragActive ? 'active' : ''} hover:bg-gray-50 cursor-pointer p-8 border-2 border-dashed border-gray-300 rounded-lg text-center`}
         >
           <input {...getInputProps()} />
-          <Upload className="h-12 w-12 text-gray-400 mb-2" />
+          <Upload className="h-12 w-12 text-gray-400 mb-2 mx-auto" />
           <p className="text-lg font-medium mb-1">Drag & drop LEDES file here</p>
           <p className="text-sm text-gray-500 mb-3">Or click to browse</p>
           <p className="text-xs text-gray-400">Supports LEDES 1998B, 2.0, and 2.1 formats</p>
