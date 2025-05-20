@@ -51,6 +51,25 @@ interface EnhancedInvoiceGridProps {
   onLineItemUpdate: (lineItem: LineItem) => void;
 }
 
+// Highlight matching text in search results
+const HighlightMatch = ({ text, searchTerm }: { text: string, searchTerm: string }) => {
+  if (!searchTerm || searchTerm === '') {
+    return <>{text}</>;
+  }
+
+  const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
+  
+  return (
+    <>
+      {parts.map((part, i) => 
+        part.toLowerCase() === searchTerm.toLowerCase() ? 
+          <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark> : 
+          <span key={i}>{part}</span>
+      )}
+    </>
+  );
+};
+
 const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({ 
   data, 
   filters, 
@@ -233,7 +252,16 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     {
       accessorKey: 'timekeeper_name',
       header: 'Timekeeper',
-      cell: ({ row }) => <div className="max-w-[150px] truncate">{row.getValue('timekeeper_name')}</div>
+      cell: ({ row }) => {
+        const timekeeperName = row.getValue('timekeeper_name') as string;
+        const searchTerm = filters.search || '';
+        
+        return (
+          <div className="max-w-[150px] truncate">
+            <HighlightMatch text={timekeeperName} searchTerm={searchTerm} />
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'service_date',
@@ -472,13 +500,14 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       cell: ({ row }) => {
         const narrative: string = row.getValue('narrative');
         const isExpanded = expandedRows[row.id] || false;
+        const searchTerm = filters.search || '';
         
         return (
           <div 
             className={isExpanded ? "" : "max-w-[400px] truncate"} 
             title={!isExpanded ? narrative : undefined}
           >
-            {narrative}
+            <HighlightMatch text={narrative} searchTerm={searchTerm} />
           </div>
         );
       },
@@ -526,7 +555,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         );
       }
     },
-  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate]);
+  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate, filters.search]);
 
   // Apply global filtering based on search input
   const globalFilter = useMemo(() => {
@@ -602,6 +631,9 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
   }, [data, globalFilter, customFilters]);
 
   const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+
+  // Set filtered data to table
+  table.setPageSize(10);
 
   return (
     <div className="space-y-4">

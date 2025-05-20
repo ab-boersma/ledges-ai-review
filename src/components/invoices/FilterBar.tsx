@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,10 +31,28 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
     taskCode: '',
   });
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounce function to avoid too many updates while typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      onFilterChange(filters);
+      setIsSearching(false);
+    }, 300); // 300ms debounce delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [filters, onFilterChange]);
 
   const handleFilterChange = (key: string, value: any) => {
     // Convert 'all' values to empty string for filtering logic
     const normalizedValue = value === 'all' ? '' : value;
+    
+    // Set searching state if changing search
+    if (key === 'search') {
+      setIsSearching(true);
+    }
     
     const updatedFilters = { ...filters, [key]: normalizedValue };
     setFilters(updatedFilters);
@@ -44,8 +62,6 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
       .filter(([_, val]) => val !== '')
       .map(([key, _]) => key);
     setActiveFilters(active);
-    
-    onFilterChange(updatedFilters);
   };
 
   const clearFilters = () => {
@@ -74,7 +90,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
     <div className="space-y-2 mb-4">
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className={`absolute left-2.5 top-2.5 h-4 w-4 ${isSearching ? 'text-blue-500 animate-pulse' : 'text-gray-500'}`} />
           <Input
             placeholder="Search by timekeeper or narrative..."
             className="pl-9"
@@ -96,6 +112,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="adjusted">Adjusted</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="compliance_accepted">Compliance Accepted</SelectItem>
           </SelectContent>
         </Select>
         
