@@ -52,6 +52,7 @@ export const getColumns = ({
         </div>
       ),
       enableSorting: false,
+      size: 40,
     },
     {
       id: 'actions',
@@ -91,7 +92,8 @@ export const getColumns = ({
             </Button>
           </div>
         );
-      }
+      },
+      size: 80,
     },
     {
       accessorKey: 'timekeeper_name',
@@ -103,7 +105,8 @@ export const getColumns = ({
           activeFilter={activeFilters['timekeeper_name']}
         />
       ),
-      cell: ({ row }) => <div className="max-w-[150px] truncate">{row.getValue('timekeeper_name')}</div>
+      cell: ({ row }) => <div className="max-w-[110px] truncate">{row.getValue('timekeeper_name')}</div>,
+      size: 110,
     },
     {
       accessorKey: 'service_date',
@@ -116,20 +119,22 @@ export const getColumns = ({
         />
       ),
       cell: ({ row }) => (
-        <div>{new Date(row.getValue('service_date')).toLocaleDateString()}</div>
+        <div className="whitespace-nowrap">{new Date(row.getValue('service_date')).toLocaleDateString()}</div>
       ),
+      size: 100,
     },
     {
       accessorKey: 'task_code',
       header: ({ column }) => (
         <TextFilterDropdown
           column={column}
-          title="Task Code"
+          title="Task"
           onFilterChange={(value) => onFilterChange('task_code', value)}
           activeFilter={activeFilters['task_code']}
         />
       ),
-      cell: ({ row }) => <div className="text-center">{row.getValue('task_code')}</div>
+      cell: ({ row }) => <div className="text-center">{row.getValue('task_code')}</div>,
+      size: 70,
     },
     {
       accessorKey: 'activity_code',
@@ -141,7 +146,8 @@ export const getColumns = ({
           activeFilter={activeFilters['activity_code']}
         />
       ),
-      cell: ({ row }) => <div className="text-center">{row.getValue('activity_code')}</div>
+      cell: ({ row }) => <div className="text-center">{row.getValue('activity_code')}</div>,
+      size: 70,
     },
     {
       accessorKey: 'hours',
@@ -161,7 +167,7 @@ export const getColumns = ({
           if (isEditing) {
             return (
               <Input
-                className="h-8 w-20 p-1 text-right"
+                className="h-8 w-16 p-1 text-right"
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={() => {
@@ -196,6 +202,7 @@ export const getColumns = ({
         
         return <EditableCell value={row.getValue('hours')} />;
       },
+      size: 70,
     },
     {
       accessorKey: 'rate',
@@ -208,6 +215,7 @@ export const getColumns = ({
         />
       ),
       cell: ({ row }) => <div className="text-right">{formatCurrency(row.getValue('rate'))}</div>,
+      size: 90,
     },
     {
       accessorKey: 'amount',
@@ -239,6 +247,7 @@ export const getColumns = ({
         
         return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
       },
+      size: 100,
     },
     {
       accessorKey: 'narrative',
@@ -253,11 +262,12 @@ export const getColumns = ({
       cell: ({ row }) => {
         const narrative: string = row.getValue('narrative');
         return (
-          <div className="max-w-[400px] truncate" title={narrative}>
+          <div className="max-w-[200px] min-w-[150px] truncate" title={narrative}>
             {narrative}
           </div>
         );
       },
+      size: 200,
     },
     {
       accessorKey: 'status',
@@ -294,7 +304,8 @@ export const getColumns = ({
             </span>
           </div>
         );
-      }
+      },
+      size: 100,
     },
   ];
 };
