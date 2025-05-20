@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import {
   flexRender,
@@ -35,6 +34,12 @@ import {
   DollarSign,
   ShieldCheck,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import AICommentary from './AICommentary';
 import AdjustmentPanel from './AdjustmentPanel';
 
@@ -146,11 +151,38 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         
         switch(action) {
           case 'approve':
-            return <ShieldCheck className="h-4 w-4 mx-auto text-green-500" title="Compliance accepted" />;
+            return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ShieldCheck className="h-4 w-4 mx-auto text-green-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Compliance accepted</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
           case 'adjust':
-            return <AlertTriangle className="h-4 w-4 mx-auto text-amber-500" title="Needs adjustment" />;
+            return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="h-4 w-4 mx-auto text-amber-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Needs adjustment</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
           case 'reject':
-            return <AlertTriangle className="h-4 w-4 mx-auto text-red-500" title="Recommended rejection" />;
+            return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="h-4 w-4 mx-auto text-red-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Recommended rejection</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
           default:
             return null;
         }
@@ -459,10 +491,11 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
   // Apply additional filters
   const customFilters = useMemo(() => {
     return (row: LineItem) => {
-      // Status filter - update to handle new status values
+      // Status filter
       if (filters.status) {
         // For backward compatibility
-        if (filters.status === 'approved' && row.status === 'reviewed') return true;
+        if (filters.status === 'reviewed' && row.status === 'reviewed') return true;
+        if (filters.status === 'compliance_accepted' && row.status === 'compliance_accepted') return true;
         if (filters.status !== row.status) return false;
       }
       

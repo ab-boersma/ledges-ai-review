@@ -1,4 +1,3 @@
-
 // Core data types for LEDES invoice processing application
 
 export type LEDESFormat = '1998B' | '2.0' | '2.1';
@@ -29,7 +28,7 @@ export interface LineItem {
   amount: number;
   narrative: string;
   tax: number;
-  status: 'pending' | 'approved' | 'adjusted' | 'rejected';
+  status: 'pending' | 'reviewed' | 'approved' | 'adjusted' | 'rejected' | 'compliance_accepted';
   ai_score: number | null;
   ai_action: 'approve' | 'adjust' | 'reject' | null;
   adjusted_hours: number | null;

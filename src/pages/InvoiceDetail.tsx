@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -152,15 +153,19 @@ const InvoiceDetail: React.FC = () => {
   const recalculateInvoiceTotals = (items: LineItem[]) => {
     const originalTotal = items.reduce((sum, item) => sum + item.amount, 0);
     
-    // Calculate adjusted total based on status - updated for new statuses
+    // Calculate adjusted total based on status
     const adjustedTotal = items.reduce((sum, item) => {
       if (item.status === 'reviewed' || item.status === 'compliance_accepted') {
+        // For items that are reviewed or compliance accepted, use original amount
         return sum + item.amount;
       } else if (item.status === 'adjusted' && item.adjusted_amount !== null) {
+        // For adjusted items, use the adjusted amount
         return sum + item.adjusted_amount;
       } else if (item.status === 'rejected') {
+        // For rejected items, don't count the amount
         return sum;
       }
+      // For pending items, use original amount
       return sum + item.amount;
     }, 0);
     
@@ -177,7 +182,7 @@ const InvoiceDetail: React.FC = () => {
     
     // Simulate AI compliance check
     setTimeout(() => {
-      // Update some line items with compliance flags and the new status values
+      // Update some line items with compliance flags
       const updatedItems = lineItems.map((item, index) => {
         // Flag about 10% of items randomly
         if (index % 10 === 0) {
@@ -219,7 +224,7 @@ const InvoiceDetail: React.FC = () => {
             adjusted_rate: aiAction === 'adjust' ? adjustedRate : null,
             adjusted_amount: aiAction === 'adjust' ? adjustedAmount : null,
             status: newStatus
-          };
+          } as LineItem;
         }
         return item;
       });
