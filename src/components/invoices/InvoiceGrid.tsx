@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import {
   flexRender,
@@ -140,7 +139,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
     onFilterChange: handleFilterChange,
     activeFilters: columnFilters,
     columnFilterFns
-  }), [onBulkEdit, columnFilters, columnFilterFns]);
+  }), [onBulkEdit, handleFilterChange, columnFilters, columnFilterFns]);
   
   // Initialize table
   const table = useReactTable({
