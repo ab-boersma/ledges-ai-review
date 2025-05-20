@@ -134,7 +134,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({ data, onBulkEdit }) => {
     status: filterFunctions.status,
   }), []);
   
-  // Get columns with filter props
+  // Get columns with filter props - FIXED: Added columnFilterFns as the 4th argument
   const columns = useMemo(() => getColumns({
     onBulkEdit,
     onFilterChange: handleFilterChange,
