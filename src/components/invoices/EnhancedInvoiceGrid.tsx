@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   flexRender,
@@ -115,6 +116,24 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     timekeeper: {
       value: "",
     },
+    taskCode: {
+      value: "",
+    },
+    activityCode: {
+      value: "",
+    },
+    hours: {
+      min: "",
+      max: "",
+    },
+    rate: {
+      min: "",
+      max: "",
+    },
+    serviceDate: {
+      start: "",
+      end: "",
+    },
   });
 
   // Format currency values
@@ -175,7 +194,15 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       columnFilters.aiAction.adjust || 
       columnFilters.aiAction.reject ||
       columnFilters.amount.showChangesOnly ||
-      !!columnFilters.timekeeper.value
+      !!columnFilters.timekeeper.value ||
+      !!columnFilters.taskCode.value ||
+      !!columnFilters.activityCode.value ||
+      !!columnFilters.hours.min || 
+      !!columnFilters.hours.max ||
+      !!columnFilters.rate.min ||
+      !!columnFilters.rate.max ||
+      !!columnFilters.serviceDate.start ||
+      !!columnFilters.serviceDate.end
     );
   }, [columnFilters]);
 
@@ -197,6 +224,24 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       },
       timekeeper: {
         value: "",
+      },
+      taskCode: {
+        value: "",
+      },
+      activityCode: {
+        value: "",
+      },
+      hours: {
+        min: "",
+        max: "",
+      },
+      rate: {
+        min: "",
+        max: "",
+      },
+      serviceDate: {
+        start: "",
+        end: "",
       },
     });
   };
@@ -519,24 +564,308 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'service_date',
-      header: 'Date',
+      header: () => (
+        <div className="flex items-center">
+          <span className="mr-1">Date</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.serviceDate.start || columnFilters.serviceDate.end ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-3" align="start">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Date</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                    <Input
+                      type="date"
+                      value={columnFilters.serviceDate.start}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          serviceDate: {
+                            ...columnFilters.serviceDate,
+                            start: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">End Date</label>
+                    <Input
+                      type="date"
+                      value={columnFilters.serviceDate.end}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          serviceDate: {
+                            ...columnFilters.serviceDate,
+                            end: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                </div>
+                {(columnFilters.serviceDate.start || columnFilters.serviceDate.end) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs"
+                    onClick={() => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        serviceDate: {
+                          start: "",
+                          end: "",
+                        },
+                      });
+                    }}
+                  >
+                    Clear Date Filters
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row }) => (
         <div>{new Date(row.getValue('service_date')).toLocaleDateString()}</div>
       ),
     },
     {
       accessorKey: 'task_code',
-      header: 'Task Code',
-      cell: ({ row }) => <div className="text-center">{row.getValue('task_code')}</div>
+      header: () => (
+        <div className="flex items-center justify-center">
+          <span className="mr-1">Task Code</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.taskCode.value ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-3" align="center">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Task Code</h4>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Enter task code..."
+                    value={columnFilters.taskCode.value}
+                    onChange={(e) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        taskCode: {
+                          value: e.target.value,
+                        },
+                      });
+                    }}
+                    className="h-8"
+                  />
+                  {columnFilters.taskCode.value && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          taskCode: {
+                            value: "",
+                          },
+                        });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const taskCode = row.getValue('task_code') as string;
+        const searchTerm = columnFilters.taskCode.value || '';
+        
+        return (
+          <div className="text-center">
+            <HighlightMatch text={taskCode} searchTerm={searchTerm} />
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'activity_code',
-      header: 'Activity',
-      cell: ({ row }) => <div className="text-center">{row.getValue('activity_code')}</div>
+      header: () => (
+        <div className="flex items-center justify-center">
+          <span className="mr-1">Activity</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.activityCode.value ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-3" align="center">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Activity Code</h4>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Enter activity code..."
+                    value={columnFilters.activityCode.value}
+                    onChange={(e) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        activityCode: {
+                          value: e.target.value,
+                        },
+                      });
+                    }}
+                    className="h-8"
+                  />
+                  {columnFilters.activityCode.value && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          activityCode: {
+                            value: "",
+                          },
+                        });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const activityCode = row.getValue('activity_code') as string;
+        const searchTerm = columnFilters.activityCode.value || '';
+        
+        return (
+          <div className="text-center">
+            <HighlightMatch text={activityCode} searchTerm={searchTerm} />
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'hours',
-      header: 'Hours',
+      header: () => (
+        <div className="flex items-center justify-end">
+          <span className="mr-1">Hours</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.hours.min || columnFilters.hours.max ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-3" align="end">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Hours</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Min Hours</label>
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={columnFilters.hours.min}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          hours: {
+                            ...columnFilters.hours,
+                            min: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                      step="0.1"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Max Hours</label>
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={columnFilters.hours.max}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          hours: {
+                            ...columnFilters.hours,
+                            max: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                      step="0.1"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                {(columnFilters.hours.min || columnFilters.hours.max) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs"
+                    onClick={() => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        hours: {
+                          min: "",
+                          max: "",
+                        },
+                      });
+                    }}
+                  >
+                    Clear Hours Filters
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row, column, cell }) => {
         const isEditing = 
           editingCell?.rowId === row.id && 
@@ -603,7 +932,87 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'rate',
-      header: 'Rate',
+      header: () => (
+        <div className="flex items-center justify-end">
+          <span className="mr-1">Rate</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.rate.min || columnFilters.rate.max ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-3" align="end">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Rate</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Min Rate ($)</label>
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={columnFilters.rate.min}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          rate: {
+                            ...columnFilters.rate,
+                            min: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Max Rate ($)</label>
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={columnFilters.rate.max}
+                      onChange={(e) => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          rate: {
+                            ...columnFilters.rate,
+                            max: e.target.value,
+                          },
+                        });
+                      }}
+                      className="h-8"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                {(columnFilters.rate.min || columnFilters.rate.max) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs"
+                    onClick={() => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        rate: {
+                          min: "",
+                          max: "",
+                        },
+                      });
+                    }}
+                  >
+                    Clear Rate Filters
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row, column }) => {
         const isEditing = 
           editingCell?.rowId === row.id && 
@@ -795,7 +1204,11 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'narrative',
-      header: 'Narrative',
+      header: () => (
+        <div className="flex items-center">
+          <span className="mr-1">Narrative</span>
+        </div>
+      ),
       cell: ({ row }) => {
         const narrative: string = row.getValue('narrative');
         const isExpanded = expandedRows[row.id] || false;
@@ -982,6 +1395,65 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       if (columnFilters.timekeeper.value) {
         if (!row.timekeeper_name.toLowerCase().includes(columnFilters.timekeeper.value.toLowerCase())) {
           return false;
+        }
+      }
+      
+      // Task Code filtering
+      if (columnFilters.taskCode.value) {
+        if (!row.task_code.toLowerCase().includes(columnFilters.taskCode.value.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Activity Code filtering
+      if (columnFilters.activityCode.value) {
+        if (!row.activity_code.toLowerCase().includes(columnFilters.activityCode.value.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Hours range filtering
+      if (columnFilters.hours.min || columnFilters.hours.max) {
+        const hours = row.hours;
+        
+        if (columnFilters.hours.min && parseFloat(columnFilters.hours.min) > hours) {
+          return false;
+        }
+        
+        if (columnFilters.hours.max && parseFloat(columnFilters.hours.max) < hours) {
+          return false;
+        }
+      }
+      
+      // Rate range filtering
+      if (columnFilters.rate.min || columnFilters.rate.max) {
+        const rate = row.rate;
+        
+        if (columnFilters.rate.min && parseFloat(columnFilters.rate.min) > rate) {
+          return false;
+        }
+        
+        if (columnFilters.rate.max && parseFloat(columnFilters.rate.max) < rate) {
+          return false;
+        }
+      }
+      
+      // Date range filtering
+      if (columnFilters.serviceDate.start || columnFilters.serviceDate.end) {
+        const serviceDate = new Date(row.service_date);
+        
+        if (columnFilters.serviceDate.start) {
+          const startDate = new Date(columnFilters.serviceDate.start);
+          if (serviceDate < startDate) {
+            return false;
+          }
+        }
+        
+        if (columnFilters.serviceDate.end) {
+          const endDate = new Date(columnFilters.serviceDate.end);
+          if (serviceDate > endDate) {
+            return false;
+          }
         }
       }
       
@@ -1231,6 +1703,114 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
                       ...columnFilters,
                       timekeeper: {
                         value: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.taskCode.value && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Task: {columnFilters.taskCode.value}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      taskCode: {
+                        value: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.activityCode.value && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Activity: {columnFilters.activityCode.value}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      activityCode: {
+                        value: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {(columnFilters.hours.min || columnFilters.hours.max) && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Hours: {columnFilters.hours.min || '0'} - {columnFilters.hours.max || '∞'}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      hours: {
+                        min: "",
+                        max: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {(columnFilters.rate.min || columnFilters.rate.max) && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Rate: ${columnFilters.rate.min || '0'} - ${columnFilters.rate.max || '∞'}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      rate: {
+                        min: "",
+                        max: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {(columnFilters.serviceDate.start || columnFilters.serviceDate.end) && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Date: {columnFilters.serviceDate.start || 'Any'} to {columnFilters.serviceDate.end || 'Any'}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      serviceDate: {
+                        start: "",
+                        end: "",
                       },
                     });
                   }}
