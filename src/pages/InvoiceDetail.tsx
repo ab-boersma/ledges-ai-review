@@ -4,7 +4,8 @@ import { toast } from 'sonner';
 
 import MainLayout from '@/components/layout/MainLayout';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';
-import InvoiceGrid from '@/components/invoices/InvoiceGrid';
+import EnhancedInvoiceGrid from '@/components/invoices/EnhancedInvoiceGrid';
+import FilterBar from '@/components/invoices/FilterBar';
 import { Invoice, LineItem } from '@/types';
 import { 
   Card, 
@@ -98,6 +99,7 @@ const InvoiceDetail: React.FC = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeStep, setActiveStep] = useState(1);
+  const [filters, setFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
     // Simulate API call to load invoice data
@@ -125,9 +127,25 @@ const InvoiceDetail: React.FC = () => {
     toast.success(`Updated ${items.length} line item(s)`);
     
     // Recalculate invoice totals if necessary
-    if (['hours', 'rate', 'amount', 'adjusted_hours', 'adjusted_rate', 'adjusted_amount'].includes(fieldName)) {
+    if (['hours', 'rate', 'amount', 'adjusted_hours', 'adjusted_rate', 'adjusted_amount', 'status'].includes(fieldName)) {
       recalculateInvoiceTotals(updatedItems);
     }
+  };
+
+  const handleLineItemUpdate = (updatedItem: LineItem) => {
+    // Update the single line item in state
+    const updatedItems = lineItems.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    );
+    
+    setLineItems(updatedItems);
+    recalculateInvoiceTotals(updatedItems);
+    
+    toast.success('Line item adjusted successfully');
+  };
+
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    setFilters(newFilters);
   };
 
   const recalculateInvoiceTotals = (items: LineItem[]) => {
@@ -173,10 +191,26 @@ const InvoiceDetail: React.FC = () => {
             aiAction = 'reject';
           }
           
+          // Apply adjustment if needed
+          let adjustedHours = null;
+          let adjustedRate = null;
+          let adjustedAmount = null;
+          
+          if (aiAction === 'adjust') {
+            // Reduce hours or rate by 10-30%
+            const reductionFactor = 0.7 + Math.random() * 0.2;
+            adjustedHours = parseFloat((item.hours * reductionFactor).toFixed(2));
+            adjustedRate = item.rate;
+            adjustedAmount = parseFloat((adjustedHours * adjustedRate).toFixed(2));
+          }
+          
           return {
             ...item,
             ai_score: parseFloat((randomScore * 100).toFixed(2)),
             ai_action: aiAction,
+            adjusted_hours: aiAction === 'adjust' ? adjustedHours : null,
+            adjusted_rate: aiAction === 'adjust' ? adjustedRate : null,
+            adjusted_amount: aiAction === 'adjust' ? adjustedAmount : null,
             status: aiAction === 'approve' ? 'approved' : aiAction === 'adjust' ? 'adjusted' : aiAction === 'reject' ? 'rejected' : item.status
           };
         }
@@ -233,9 +267,9 @@ const InvoiceDetail: React.FC = () => {
               <h3 className="text-blue-800 font-medium mb-1">Invoice Review Instructions</h3>
               <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
                 <li>Run the Compliance Check to identify potential issues</li>
-                <li>Review flagged items with amber or red indicators</li>
+                <li>Use filters to find specific line items or issues</li>
+                <li>Click on the expand button to see AI commentary and adjustment options</li>
                 <li>Select multiple items to perform bulk actions</li>
-                <li>Click on hours to edit individual entries</li>
                 <li>Approve the invoice when review is complete</li>
               </ol>
             </div>
@@ -251,9 +285,12 @@ const InvoiceDetail: React.FC = () => {
         
         <Card>
           <CardContent className="p-4">
-            <InvoiceGrid 
+            <FilterBar onFilterChange={handleFilterChange} />
+            <EnhancedInvoiceGrid 
               data={lineItems}
+              filters={filters}
               onBulkEdit={handleBulkEdit}
+              onLineItemUpdate={handleLineItemUpdate}
             />
           </CardContent>
         </Card>
