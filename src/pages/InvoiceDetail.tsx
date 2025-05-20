@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -102,6 +102,19 @@ const InvoiceDetail: React.FC = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [filters, setFilters] = useState<Record<string, any>>({});
 
+  // Calculate the stats for displaying in the header
+  const stats = useMemo(() => {
+    const adjustedCount = lineItems.filter(item => item.status === 'adjusted').length;
+    const rejectedCount = lineItems.filter(item => item.status === 'rejected').length;
+    const hasAdjustments = adjustedCount > 0 || rejectedCount > 0;
+    
+    return {
+      adjustedCount,
+      rejectedCount,
+      hasAdjustments
+    };
+  }, [lineItems]);
+
   useEffect(() => {
     // Simulate API call to load invoice data
     setLoading(true);
@@ -155,8 +168,8 @@ const InvoiceDetail: React.FC = () => {
     
     // Calculate adjusted total based on status
     const adjustedTotal = items.reduce((sum, item) => {
-      if (item.status === 'reviewed' || item.status === 'compliance_accepted') {
-        // For items that are reviewed or compliance accepted, use original amount
+      if (item.status === 'compliance_accepted' || item.status === 'reviewed' || item.status === 'pending') {
+        // For items that are compliance accepted, reviewed or pending, use original amount
         return sum + item.amount;
       } else if (item.status === 'adjusted' && item.adjusted_amount !== null) {
         // For adjusted items, use the adjusted amount
@@ -165,7 +178,7 @@ const InvoiceDetail: React.FC = () => {
         // For rejected items, don't count the amount
         return sum;
       }
-      // For pending items, use original amount
+      // For other statuses, use original amount
       return sum + item.amount;
     }, 0);
     
@@ -282,6 +295,7 @@ const InvoiceDetail: React.FC = () => {
                 <li>Use filters to find specific line items or issues</li>
                 <li>Click on the expand button to see AI commentary and adjustment options</li>
                 <li>Select multiple items to perform bulk actions</li>
+                <li>Use the quick reject button to reject line items immediately</li>
                 <li>Approve the invoice when review is complete</li>
               </ol>
             </div>
@@ -291,6 +305,9 @@ const InvoiceDetail: React.FC = () => {
               onRunCompliance={handleRunCompliance}
               onExport={handleExport}
               onApprove={handleApprove}
+              hasAdjustments={stats.hasAdjustments}
+              rejectedCount={stats.rejectedCount}
+              adjustedCount={stats.adjustedCount}
             />
           </CardContent>
         </Card>

@@ -33,6 +33,7 @@ import {
   Edit,
   DollarSign,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -91,6 +92,16 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     }));
   };
 
+  // Add a quick reject handler
+  const handleQuickReject = (lineItem: LineItem) => {
+    const updatedItem: LineItem = {
+      ...lineItem,
+      status: 'rejected',
+      adjusted_amount: 0
+    };
+    onLineItemUpdate(updatedItem);
+  };
+
   // Define columns
   const columns = useMemo<ColumnDef<LineItem>[]>(() => [
     {
@@ -143,6 +154,36 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       enableSorting: false,
     },
     {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => {
+        const lineItem = row.original;
+        const isRejected = lineItem.status === 'rejected';
+        
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 ${isRejected ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                  onClick={() => handleQuickReject(lineItem)}
+                  disabled={isRejected}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isRejected ? 'Already rejected' : 'Reject this line item'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+      enableSorting: false,
+    },
+    {
       accessorKey: 'ai_action',
       header: 'AI',
       cell: ({ row }) => {
@@ -154,7 +195,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             return (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <ShieldCheck className="h-4 w-4 mx-auto text-green-500" />
                   </TooltipTrigger>
                   <TooltipContent>Compliance accepted</TooltipContent>
@@ -165,7 +206,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             return (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <AlertTriangle className="h-4 w-4 mx-auto text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>Needs adjustment</TooltipContent>
@@ -176,7 +217,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             return (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <AlertTriangle className="h-4 w-4 mx-auto text-red-500" />
                   </TooltipTrigger>
                   <TooltipContent>Recommended rejection</TooltipContent>
@@ -341,6 +382,8 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       cell: ({ row, column }) => {
         const amount = row.getValue('amount') as number;
         const adjustedAmount = row.original.adjusted_amount;
+        const status = row.original.status;
+        const isRejected = status === 'rejected';
         
         const isEditing = 
           editingCell?.rowId === row.id && 
@@ -358,7 +401,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
                   const updatedItem: LineItem = {
                     ...row.original,
                     adjusted_amount: parseFloat(editValue) || 0,
-                    status: "adjusted" // Using literal type here to match the LineItem type
+                    status: "adjusted"
                   };
                   onLineItemUpdate(updatedItem);
                   setEditingCell(null);
@@ -368,7 +411,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
                     const updatedItem: LineItem = {
                       ...row.original,
                       adjusted_amount: parseFloat(editValue) || 0,
-                      status: "adjusted" // Using literal type here to match the LineItem type
+                      status: "adjusted"
                     };
                     onLineItemUpdate(updatedItem);
                     setEditingCell(null);
@@ -383,12 +426,23 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         }
         
         return (
-          <div className="text-right font-medium cursor-pointer hover:bg-gray-100 flex items-center justify-end"
-               onClick={() => {
-                 setEditingCell({ rowId: row.id, columnId: column.id });
-                 setEditValue((adjustedAmount !== null ? adjustedAmount : amount).toString());
-               }}>
-            {adjustedAmount !== null ? (
+          <div 
+            className={`text-right font-medium cursor-pointer hover:bg-gray-100 flex items-center justify-end ${isRejected ? 'opacity-50' : ''}`}
+            onClick={() => {
+              if (!isRejected) {
+                setEditingCell({ rowId: row.id, columnId: column.id });
+                setEditValue((adjustedAmount !== null ? adjustedAmount : amount).toString());
+              }
+            }}
+          >
+            {isRejected ? (
+              <div className="flex flex-col">
+                <span className="line-through text-gray-400 text-xs">
+                  {formatCurrency(amount)}
+                </span>
+                <span className="text-red-600">Rejected</span>
+              </div>
+            ) : adjustedAmount !== null ? (
               <div className="flex flex-col">
                 <span className="line-through text-gray-400 text-xs">
                   {formatCurrency(amount)}
@@ -456,7 +510,7 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
             break;
           case 'approved':
             statusClass = 'bg-blue-100 text-blue-800 border-blue-200';
-            displayText = 'Reviewed';
+            displayText = 'Approved';
             break;
           default:
             statusClass = 'bg-gray-100 text-gray-800 border-gray-200';
@@ -493,7 +547,6 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     return (row: LineItem) => {
       // Status filter
       if (filters.status) {
-        // For backward compatibility
         if (filters.status === 'reviewed' && row.status === 'reviewed') return true;
         if (filters.status === 'compliance_accepted' && row.status === 'compliance_accepted') return true;
         if (filters.status !== row.status) return false;
