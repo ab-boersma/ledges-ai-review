@@ -96,17 +96,78 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
           </SelectContent>
         </Select>
         
-        <CollapsibleTrigger asChild onClick={() => setIsOpen(!isOpen)}>
-          <Button variant="outline" className="flex items-center gap-1">
-            <Filter className="h-4 w-4" />
-            More Filters
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </CollapsibleTrigger>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-1">
+              <Filter className="h-4 w-4" />
+              More Filters
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="bg-gray-50 p-4 rounded-md mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount Range</label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  value={filters.minAmount}
+                  onChange={(e) => handleFilterChange('minAmount', e.target.value)}
+                />
+                <span>to</span>
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  value={filters.maxAmount}
+                  onChange={(e) => handleFilterChange('maxAmount', e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Task Code</label>
+              <Select 
+                value={filters.taskCode} 
+                onValueChange={(value) => handleFilterChange('taskCode', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select task code" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Tasks</SelectItem>
+                  <SelectItem value="A101">A101 - Plan and prepare</SelectItem>
+                  <SelectItem value="A102">A102 - Research</SelectItem>
+                  <SelectItem value="A103">A103 - Draft/Revise</SelectItem>
+                  <SelectItem value="A104">A104 - Review/Analyze</SelectItem>
+                  <SelectItem value="B110">B110 - Communicate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">AI Actions</label>
+              <Select 
+                value={filters.aiAction} 
+                onValueChange={(value) => handleFilterChange('aiAction', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by AI action" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Items</SelectItem>
+                  <SelectItem value="approve">Approved by AI</SelectItem>
+                  <SelectItem value="adjust">Flagged for Adjustment</SelectItem>
+                  <SelectItem value="reject">Recommended Rejection</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {activeFilters.length > 0 && (
@@ -128,68 +189,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
           </div>
         </div>
       )}
-
-      <Collapsible open={isOpen}>
-        <CollapsibleContent className="bg-gray-50 p-4 rounded-md mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Amount Range</label>
-            <div className="flex items-center space-x-2">
-              <Input
-                placeholder="Min"
-                type="number"
-                value={filters.minAmount}
-                onChange={(e) => handleFilterChange('minAmount', e.target.value)}
-              />
-              <span>to</span>
-              <Input
-                placeholder="Max"
-                type="number"
-                value={filters.maxAmount}
-                onChange={(e) => handleFilterChange('maxAmount', e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Task Code</label>
-            <Select 
-              value={filters.taskCode} 
-              onValueChange={(value) => handleFilterChange('taskCode', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select task code" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Tasks</SelectItem>
-                <SelectItem value="A101">A101 - Plan and prepare</SelectItem>
-                <SelectItem value="A102">A102 - Research</SelectItem>
-                <SelectItem value="A103">A103 - Draft/Revise</SelectItem>
-                <SelectItem value="A104">A104 - Review/Analyze</SelectItem>
-                <SelectItem value="B110">B110 - Communicate</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">AI Actions</label>
-            <Select 
-              value={filters.aiAction} 
-              onValueChange={(value) => handleFilterChange('aiAction', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by AI action" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Items</SelectItem>
-                <SelectItem value="approve">Approved by AI</SelectItem>
-                <SelectItem value="adjust">Flagged for Adjustment</SelectItem>
-                <SelectItem value="reject">Recommended Rejection</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+    </Collapsible>
   );
 };
 
