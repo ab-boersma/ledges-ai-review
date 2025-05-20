@@ -34,6 +34,8 @@ import {
   DollarSign,
   ShieldCheck,
   Trash2,
+  Filter,
+  X,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -41,6 +43,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import AICommentary from './AICommentary';
 import AdjustmentPanel from './AdjustmentPanel';
 
@@ -81,6 +96,26 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
   const [editingCell, setEditingCell] = useState<{ rowId: string; columnId: string } | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  
+  // Column filtering state
+  const [columnFilters, setColumnFilters] = useState({
+    status: {
+      accepted: false,
+      adjusted: false,
+      rejected: false,
+    },
+    aiAction: {
+      approve: false,
+      adjust: false,
+      reject: false,
+    },
+    amount: {
+      showChangesOnly: false,
+    },
+    timekeeper: {
+      value: "",
+    },
+  });
 
   // Format currency values
   const formatCurrency = (value: number): string => {
@@ -128,6 +163,42 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
       status: 'compliance_accepted'
     };
     onLineItemUpdate(updatedItem);
+  };
+
+  // Check if any column filter is active
+  const isColumnFilterActive = useMemo(() => {
+    return (
+      columnFilters.status.accepted || 
+      columnFilters.status.adjusted || 
+      columnFilters.status.rejected ||
+      columnFilters.aiAction.approve ||
+      columnFilters.aiAction.adjust || 
+      columnFilters.aiAction.reject ||
+      columnFilters.amount.showChangesOnly ||
+      !!columnFilters.timekeeper.value
+    );
+  }, [columnFilters]);
+
+  // Clear all column filters
+  const clearAllColumnFilters = () => {
+    setColumnFilters({
+      status: {
+        accepted: false,
+        adjusted: false,
+        rejected: false,
+      },
+      aiAction: {
+        approve: false,
+        adjust: false,
+        reject: false,
+      },
+      amount: {
+        showChangesOnly: false,
+      },
+      timekeeper: {
+        value: "",
+      },
+    });
   };
 
   // Define columns
@@ -235,7 +306,105 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'ai_action',
-      header: 'AI',
+      header: () => (
+        <div className="flex items-center justify-center">
+          <span className="mr-1">AI</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.aiAction.approve || 
+                  columnFilters.aiAction.adjust || 
+                  columnFilters.aiAction.reject ? 
+                  'bg-blue-100 text-blue-600' : ''}`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <div className="p-2">
+                <h4 className="text-sm font-medium mb-2">Filter by AI Action</h4>
+                <div className="space-y-1">
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.aiAction.approve}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        aiAction: {
+                          ...columnFilters.aiAction,
+                          approve: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <ShieldCheck className="h-4 w-4 text-green-500 mr-2" />
+                      Approved
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.aiAction.adjust}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        aiAction: {
+                          ...columnFilters.aiAction,
+                          adjust: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                      Needs Adjustment
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.aiAction.reject}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        aiAction: {
+                          ...columnFilters.aiAction,
+                          reject: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <AlertTriangle className="h-4 w-4 text-red-500 mr-2" />
+                      Rejection
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                </div>
+                {(columnFilters.aiAction.approve || 
+                  columnFilters.aiAction.adjust || 
+                  columnFilters.aiAction.reject) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs"
+                    onClick={() => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        aiAction: {
+                          approve: false,
+                          adjust: false,
+                          reject: false,
+                        },
+                      });
+                    }}
+                  >
+                    Clear AI Filters
+                  </Button>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
       cell: ({ row }) => {
         const action = row.getValue('ai_action');
         if (!action) return null;
@@ -282,10 +451,64 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'timekeeper_name',
-      header: 'Timekeeper',
+      header: () => (
+        <div className="flex items-center">
+          <span className="mr-1">Timekeeper</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.timekeeper.value ? 'bg-blue-100 text-blue-600' : ''
+                }`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-3" align="start">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Timekeeper</h4>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Search timekeepers..."
+                    value={columnFilters.timekeeper.value}
+                    onChange={(e) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        timekeeper: {
+                          value: e.target.value,
+                        },
+                      });
+                    }}
+                    className="h-8"
+                  />
+                  {columnFilters.timekeeper.value && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setColumnFilters({
+                          ...columnFilters,
+                          timekeeper: {
+                            value: "",
+                          },
+                        });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row }) => {
         const timekeeperName = row.getValue('timekeeper_name') as string;
-        const searchTerm = filters.search || '';
+        const searchTerm = columnFilters.timekeeper.value || '';
         
         return (
           <div className="max-w-[150px] truncate">
@@ -437,7 +660,51 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'amount',
-      header: 'Amount',
+      header: () => (
+        <div className="flex items-center justify-end">
+          <span className="mr-1">Amount</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${columnFilters.amount.showChangesOnly ? 'bg-blue-100 text-blue-600' : ''}`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-3" align="end">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Filter by Amount</h4>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="amountChangesFilter"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mr-2"
+                    checked={columnFilters.amount.showChangesOnly}
+                    onChange={(e) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        amount: {
+                          showChangesOnly: e.target.checked,
+                        },
+                      });
+                    }}
+                  />
+                  <label htmlFor="amountChangesFilter" className="text-sm">
+                    Show amount changes only
+                  </label>
+                </div>
+                {columnFilters.amount.showChangesOnly && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Showing only items with adjusted amounts
+                  </p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      ),
       cell: ({ row, column }) => {
         const amount = row.getValue('amount') as number;
         const adjustedAmount = row.original.adjusted_amount;
@@ -546,7 +813,105 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: () => (
+        <div className="flex items-center justify-center">
+          <span className="mr-1">Status</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-6 w-6 hover:bg-gray-100 ${
+                  columnFilters.status.accepted || 
+                  columnFilters.status.adjusted || 
+                  columnFilters.status.rejected ? 
+                  'bg-blue-100 text-blue-600' : ''}`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <div className="p-2">
+                <h4 className="text-sm font-medium mb-2">Filter by Status</h4>
+                <div className="space-y-1">
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.status.accepted}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        status: {
+                          ...columnFilters.status,
+                          accepted: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                      Accepted
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.status.adjusted}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        status: {
+                          ...columnFilters.status,
+                          adjusted: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 mr-2"></span>
+                      Adjusted
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columnFilters.status.rejected}
+                    onCheckedChange={(checked) => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        status: {
+                          ...columnFilters.status,
+                          rejected: !!checked,
+                        },
+                      });
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <span className="h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                      Rejected
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                </div>
+                {(columnFilters.status.accepted || 
+                  columnFilters.status.adjusted || 
+                  columnFilters.status.rejected) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 h-8 text-xs"
+                    onClick={() => {
+                      setColumnFilters({
+                        ...columnFilters,
+                        status: {
+                          accepted: false,
+                          adjusted: false,
+                          rejected: false,
+                        },
+                      });
+                    }}
+                  >
+                    Clear Status Filters
+                  </Button>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
       cell: ({ row }) => {
         const status: string = row.getValue('status');
         let statusClass = '';
@@ -587,74 +952,86 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
         );
       }
     },
-  ], [editingCell, editValue, expandedRows, onBulkEdit, onLineItemUpdate, filters.search, handleQuickAccept, handleQuickReject]);
+  ], [
+    editingCell, 
+    editValue, 
+    expandedRows, 
+    onBulkEdit, 
+    onLineItemUpdate, 
+    filters.search, 
+    handleQuickAccept, 
+    handleQuickReject, 
+    columnFilters
+  ]);
 
-  // Apply global filtering based on search input
-  const globalFilter = useMemo(() => {
-    return (row: LineItem) => {
-      if (!filters.search) return true;
-      
-      const searchTerm = filters.search.toLowerCase();
-      return (
-        row.timekeeper_name.toLowerCase().includes(searchTerm) ||
-        row.narrative.toLowerCase().includes(searchTerm) ||
-        row.task_code.toLowerCase().includes(searchTerm)
-      );
-    };
-  }, [filters.search]);
-
-  // Apply enhanced filtering with new filter options
+  // Apply global filtering and column filtering
   const customFilters = useMemo(() => {
     return (row: LineItem) => {
-      // Status filter
-      if (filters.status && row.status !== filters.status) {
-        return false;
-      }
-      
-      // Task code filter
-      if (filters.taskCode && row.task_code !== filters.taskCode) {
-        return false;
-      }
-      
-      // Amount range filter
-      if (filters.minAmount && row.amount < parseFloat(filters.minAmount)) {
-        return false;
-      }
-      if (filters.maxAmount && row.amount > parseFloat(filters.maxAmount)) {
-        return false;
-      }
-      
-      // AI action filter
-      if (filters.aiAction && row.ai_action !== filters.aiAction) {
-        return false;
-      }
-      
-      // New filtering options
-      
-      // Special case: if multiple status filters are active, match any of them (OR logic)
-      const statusFiltersActive = filters.showAdjusted || filters.showRejected || filters.showAccepted;
-      
-      if (statusFiltersActive) {
-        const isStatusMatch = 
-          (filters.showAdjusted && row.status === 'adjusted') ||
-          (filters.showRejected && row.status === 'rejected') ||
-          (filters.showAccepted && row.status === 'compliance_accepted');
+      // Search filtering (from parent component filters)
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        const matchesSearch = 
+          row.timekeeper_name.toLowerCase().includes(searchTerm) ||
+          row.narrative.toLowerCase().includes(searchTerm) ||
+          row.task_code.toLowerCase().includes(searchTerm);
           
-        if (!isStatusMatch) return false;
+        if (!matchesSearch) return false;
       }
       
-      // Filter for items with amount changes
-      if (filters.hasAmountChanges) {
-        const hasChanges = 
+      // Timekeeper filtering
+      if (columnFilters.timekeeper.value) {
+        if (!row.timekeeper_name.toLowerCase().includes(columnFilters.timekeeper.value.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Status filter
+      const statusFiltersActive = 
+        columnFilters.status.accepted || 
+        columnFilters.status.adjusted || 
+        columnFilters.status.rejected;
+        
+      if (statusFiltersActive) {
+        const matchesStatus = 
+          (columnFilters.status.accepted && row.status === 'compliance_accepted') ||
+          (columnFilters.status.adjusted && row.status === 'adjusted') ||
+          (columnFilters.status.rejected && row.status === 'rejected');
+          
+        if (!matchesStatus) return false;
+      }
+      
+      // AI Action filter
+      const aiFiltersActive = 
+        columnFilters.aiAction.approve || 
+        columnFilters.aiAction.adjust || 
+        columnFilters.aiAction.reject;
+        
+      if (aiFiltersActive) {
+        const matchesAiAction = 
+          (columnFilters.aiAction.approve && row.ai_action === 'approve') ||
+          (columnFilters.aiAction.adjust && row.ai_action === 'adjust') ||
+          (columnFilters.aiAction.reject && row.ai_action === 'reject');
+          
+        if (!matchesAiAction) return false;
+      }
+      
+      // Amount changes filter
+      if (columnFilters.amount.showChangesOnly) {
+        const hasAmountChange = 
           row.adjusted_amount !== null && 
           row.adjusted_amount !== row.amount;
-        
-        if (!hasChanges) return false;
+          
+        if (!hasAmountChange) return false;
       }
       
       return true;
     };
-  }, [filters]);
+  }, [filters.search, columnFilters]);
+
+  // Filter data manually
+  const filteredData = useMemo(() => {
+    return data.filter(row => customFilters(row));
+  }, [data, customFilters]);
 
   const table = useReactTable({
     data,
@@ -678,15 +1055,10 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
     }
   });
 
-  // Set page size once during initialization, not on every render
+  // Set page size once during initialization
   useEffect(() => {
     table.setPageSize(10);
   }, [table]);
-
-  // Filter the data manually since we're combining multiple filters
-  const filteredData = useMemo(() => {
-    return data.filter(row => globalFilter(row) && customFilters(row));
-  }, [data, globalFilter, customFilters]);
 
   const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
 
@@ -724,6 +1096,159 @@ const EnhancedInvoiceGrid: React.FC<EnhancedInvoiceGridProps> = ({
               Reject
             </Button>
           </div>
+        </div>
+      )}
+      
+      {isColumnFilterActive && (
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm text-gray-600">Active filters:</span>
+            
+            {columnFilters.status.accepted && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span className="h-2 w-2 rounded-full bg-green-500 mr-1"></span>
+                <span>Status: Accepted</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      status: {
+                        ...columnFilters.status,
+                        accepted: false,
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.status.adjusted && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span className="h-2 w-2 rounded-full bg-amber-500 mr-1"></span>
+                <span>Status: Adjusted</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      status: {
+                        ...columnFilters.status,
+                        adjusted: false,
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.status.rejected && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span className="h-2 w-2 rounded-full bg-red-500 mr-1"></span>
+                <span>Status: Rejected</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      status: {
+                        ...columnFilters.status,
+                        rejected: false,
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {(columnFilters.aiAction.approve || 
+             columnFilters.aiAction.adjust || 
+             columnFilters.aiAction.reject) && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>AI Action</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      aiAction: {
+                        approve: false,
+                        adjust: false,
+                        reject: false,
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.amount.showChangesOnly && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Amount Changes</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      amount: {
+                        showChangesOnly: false,
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {columnFilters.timekeeper.value && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs flex items-center">
+                <span>Timekeeper: {columnFilters.timekeeper.value}</span>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 ml-1 p-0"
+                  onClick={() => {
+                    setColumnFilters({
+                      ...columnFilters,
+                      timekeeper: {
+                        value: "",
+                      },
+                    });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-sm text-gray-500"
+            onClick={clearAllColumnFilters}
+          >
+            Clear All Filters
+          </Button>
         </div>
       )}
       

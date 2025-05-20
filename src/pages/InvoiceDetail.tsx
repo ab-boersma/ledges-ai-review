@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import MainLayout from '@/components/layout/MainLayout';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import EnhancedInvoiceGrid from '@/components/invoices/EnhancedInvoiceGrid';
-import FilterBar from '@/components/invoices/FilterBar';
 import { Invoice, LineItem } from '@/types';
 import { 
   Card, 
@@ -100,7 +99,9 @@ const InvoiceDetail: React.FC = () => {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeStep, setActiveStep] = useState(1);
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, any>>({
+    search: '',
+  });
 
   // Calculate the stats for displaying in the header
   const stats = useMemo(() => {
@@ -160,7 +161,7 @@ const InvoiceDetail: React.FC = () => {
   };
 
   const handleFilterChange = (newFilters: Record<string, any>) => {
-    setFilters(newFilters);
+    setFilters({...filters, ...newFilters});
   };
 
   const recalculateInvoiceTotals = (items: LineItem[]) => {
@@ -292,7 +293,7 @@ const InvoiceDetail: React.FC = () => {
               <h3 className="text-blue-800 font-medium mb-1">Invoice Review Instructions</h3>
               <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
                 <li>Run the Compliance Check to identify potential issues</li>
-                <li>Use filters to find specific line items or issues</li>
+                <li>Use column filters to find specific line items or issues</li>
                 <li>Click on the expand button to see AI commentary and adjustment options</li>
                 <li>Select multiple items to perform bulk actions</li>
                 <li>Use the quick reject button to reject line items immediately</li>
@@ -314,7 +315,15 @@ const InvoiceDetail: React.FC = () => {
         
         <Card>
           <CardContent className="p-4">
-            <FilterBar onFilterChange={handleFilterChange} />
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search timekeepers, narratives, or task codes..."
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                value={filters.search || ''}
+                onChange={(e) => handleFilterChange({search: e.target.value})}
+              />
+            </div>
             <EnhancedInvoiceGrid 
               data={lineItems}
               filters={filters}
@@ -329,3 +338,4 @@ const InvoiceDetail: React.FC = () => {
 };
 
 export default InvoiceDetail;
+
